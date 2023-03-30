@@ -19,26 +19,26 @@ class Communicator:
             print("ERROR: Couldn't start UDP communications")
             self.__del__()
             raise socket.error
-        
+
         self.listener_thread = threading.Thread(
-            target = self.listener,
-            args = [self.exit_flag]
+            target=self.listener,
+            args=[self.exit_flag]
         )
         self.listener_thread.start()
-        
+
         self.sender_thread = threading.Thread(
-            target = self.sender,
-            args = [self.exit_flag]
+            target=self.sender,
+            args=[self.exit_flag]
         )
         self.sender_thread.start()
-    
+
     def init_udp(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
-            self.sock.bind((self.host, self.port))    
+            self.sock.bind((self.host, self.port))
         except socket.error:
             raise socket.error
-        
+
     def listener(self, exit_flag: bool):
         if self.debug:
             print("Listener started.")
@@ -49,7 +49,7 @@ class Communicator:
             if self.debug:
                 print(f'Recieved: {data.decode()} from {addr}')
             time.sleep(1)
-    
+
     def sender(self, exit_flag: bool):
         while True:
             if exit_flag:
@@ -71,6 +71,7 @@ class Communicator:
         self.sender_thread.join()
         self.listener_thread.join()
         self.sock.close()
+
 
 HOST = 'localhost'
 PORT = 6000
