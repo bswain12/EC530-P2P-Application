@@ -60,7 +60,7 @@ class Communicator:
             elif data["type"] == 0: # recieved a message
                 # call something to store the message
                 print(f'New message: {data["msg"]}')
-            elif data["type"] == -1: # recieved delivery confirmation
+            elif data["type"] == 1: # recieved delivery confirmation
                 # call something to remove that message from the sending buffer
                 ##TODO 
                 print("Message confirmations not implemented yet")
@@ -92,7 +92,7 @@ class Communicator:
         timestamp = datetime.now()
         data = {"type": -1, "id": id.int, "timestamp": timestamp.isoformat('m'), "msg": None}
         json_data = json.dumps(data)
-        self.socket.sendto(json_data, recipient_address)
+        self.sock.sendto(json_data.encode(), recipient_address)
 
     def send_message(self, message: str, recipient_address: tuple):
         # Build a message, add it to self.outgoing_buffer database 
@@ -125,3 +125,5 @@ comm = Communicator(HOST, PORT, debug=True)
 while True:
     comm.send(str(input("Enter a message to send: ")), (HOST, PORT))
     time.sleep(2)
+    comm.send_ping((HOST, PORT))
+    comm.send_recieved("12039123114", (HOST, PORT))
