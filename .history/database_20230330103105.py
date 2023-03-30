@@ -27,7 +27,7 @@ c.execute('''CREATE TABLE User
               username TEXT NOT NULL,
               email TEXT NOT NULL,
               password TEXT NOT NULL,
-              ip_address TEXT,
+            ip_address TEXT,
               port INTEGER,
               friend_ids TEXT)''')
 
