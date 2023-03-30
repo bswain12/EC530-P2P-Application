@@ -29,6 +29,7 @@ c.execute('''CREATE TABLE User
               password TEXT NOT NULL,
               ip_address TEXT,
               port INTEGER,
+              status TEXT NOT NULL,
               friend_ids TEXT)''')
 
 # commit the changes and close the connection
