@@ -50,6 +50,7 @@ class Communicator:
             if exit_flag:
                 break
             data, addr = self.sock.recvfrom(1024)
+            
             # Decode json data into a python dictionary 
             data = json.loads(data.decode())
             if self.debug:
@@ -66,7 +67,6 @@ class Communicator:
                 print("Message confirmations not implemented yet")
             else:
                 raise ValueError("Unexpected message format")
-            
             time.sleep(1)
 
     def sender(self, exit_flag: bool):
@@ -80,11 +80,6 @@ class Communicator:
                     print(f'Sent: \"{data}\" to {target[0]}')
                 self.send_buf.remove(message)
             time.sleep(1)
-
-    def send(self, message: str, target: tuple):
-        # Append a simple message to the buffer
-        # We can remove this
-        self.send_message(message, target)
 
     def send_ping(self, recipient_address):
         # Build an "I'm online" message and send it
@@ -108,7 +103,6 @@ class Communicator:
         data = {"type": 1, "id": message_id, "timestamp": timestamp.isoformat('m'), "msg": None}
         json_data = json.dumps(data)
         self.send_buf.append((json_data, recipient_address))
-
 
     def __del__(self):
         if self.debug:
