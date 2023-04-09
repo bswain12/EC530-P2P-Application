@@ -61,6 +61,8 @@ class Communicator:
                 # Do things based on message type
                 if data["type"] == -1:      # recieved a ping that that address is online
                     self.online_conns.append(addr)
+                    print(f"User {self.get_username(addr)} is now online.")
+                    self.send_recieved(uuid4().int , addr)
                 elif data["type"] == 0:     # recieved a message
                     # call something to store the message
                     print(f'New message: {data["msg"]}')
@@ -68,6 +70,9 @@ class Communicator:
                     # call something to remove that message from the sending buffer
                     # TODO
                     print("Message confirmations not implemented yet")
+                    if addr not in self.online_conns:
+                        self.online_conns.append(addr)
+                        print(f"User {self.get_username(addr)} now online.")
                 else:
                     raise ValueError("Unexpected message format")
             except TimeoutError:
@@ -124,17 +129,28 @@ class Communicator:
 
         known_connections = cur.fetchall()
         for connection in known_connections:
-            print(f'{connection[1]}, {connection[2]}')
             recipient = connection[1], connection[2]
             self.send_ping(recipient)
+        conn.close()
+
+    def get_username(self, address: tuple):
+        conn = sqlite3.connect(
+            database="mydatabase.db",
+        )
+        cur = conn.cursor()
+        query = 'SELECT username FROM User WHERE ip_address = ? AND port = ?'
+        cur.execute(query, address)
+        username = cur.fetchone()[0]
+        conn.close()
+        return username
 
     def exit(self):
-        self.exit_flag = True
         self.__del__()
 
     def __del__(self):
         if self.debug:
             print("Cleaning up Communicator.")
+        self.exit_flag = True
         self.sender_thread.join()
         self.listener_thread.join()
         self.sock.close()
