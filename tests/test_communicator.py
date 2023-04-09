@@ -22,7 +22,7 @@ class Test_Communicator:
 
         comm.send_message("Test message", recipient)
         comm.exit()
- 
+
     def test_discover(self):
         comm = self.__class__.comm
         comm.discover()
