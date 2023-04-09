@@ -1,0 +1,17 @@
+name: Test code with pytest unit tests
+on: [push]
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Installing dependencies
+        uses: actions/setup-python@main
+        with:
+          python-version: '3.11'
+      - name: Installing pytest
+        run: pip install -U pytest
+      - name: Cloning repo
+        uses: actions/checkout@main
+      - name: Testing
+        run: echo "Testing code..."
+      - run: python -m pytest test*

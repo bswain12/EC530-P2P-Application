@@ -1,0 +1,17 @@
+name: Lint code with Flake8
+on: [push]
+jobs:
+  Lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Installing dependencies
+        uses: actions/setup-python@main
+        with:
+          python-version: '3.11'
+      - name: Installing flake
+        run: pip install flake8
+      - name: Cloning repo
+        uses: actions/checkout@main
+      - name: Linting...
+        run: echo "Linting code"
+      - run: flake8 *.py tests/*.py --max-line-length 105
