@@ -37,7 +37,7 @@ class Communicator:
 
     def init_udp(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.settimeout(1)
+        self.sock.setblocking(False)
         try:
             self.sock.bind((self.host, self.port))
         except socket.error:
@@ -75,9 +75,8 @@ class Communicator:
                         print(f"User {self.get_username(addr)} now online.")
                 else:
                     raise ValueError("Unexpected message format")
-            except TimeoutError:
-                if self.debug:
-                    print("No data found")
+            except BlockingIOError:
+                time.sleep(1)
             time.sleep(1)
 
     def sender(self):
