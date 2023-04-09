@@ -25,14 +25,12 @@ class Communicator:
             raise socket.error
 
         self.listener_thread = threading.Thread(
-            target=self.listener,
-            args=[self.exit_flag]
+            target=self.listener
         )
         self.listener_thread.start()
 
         self.sender_thread = threading.Thread(
-            target=self.sender,
-            args=[self.exit_flag]
+            target=self.sender
         )
         self.sender_thread.start()
 
@@ -43,36 +41,42 @@ class Communicator:
         except socket.error:
             raise socket.error
 
-    def listener(self, exit_flag: bool):
+    def listener(self):
         if self.debug:
             print("Listener started.")
         while True:
-            if exit_flag:
-                break
+            if self.exit_flag:
+                if self.debug:
+                    print("listener exited.")
+                return
             data, addr = self.sock.recvfrom(1024)
-            
-            # Decode json data into a python dictionary 
+
+            # Decode json data into a python dictionary
             data = json.loads(data.decode())
             if self.debug:
                 print(f'Recieved msg with type {data["type"]} and message {data["msg"]} from {addr}')
             # Do things based on message type
-            if data["type"] == -1: # recieved a ping that that address is online
+            if data["type"] == -1:      # recieved a ping that that address is online
                 self.online_conns.append(addr)
-            elif data["type"] == 0: # recieved a message
+            elif data["type"] == 0:     # recieved a message
                 # call something to store the message
                 print(f'New message: {data["msg"]}')
-            elif data["type"] == 1: # recieved delivery confirmation
+            elif data["type"] == 1:     # recieved delivery confirmation
                 # call something to remove that message from the sending buffer
-                ##TODO 
+                # TODO
                 print("Message confirmations not implemented yet")
             else:
                 raise ValueError("Unexpected message format")
             time.sleep(1)
 
-    def sender(self, exit_flag: bool):
+    def sender(self):
+        if self.debug:
+            print("Sender started.")
         while True:
-            if exit_flag:
-                break
+            if self.exit_flag:
+                if self.debug:
+                    print("Sender exited.")
+                return
             for message in self.send_buf:
                 data, target = message
                 self.sock.sendto(data.encode(), target)
@@ -81,7 +85,7 @@ class Communicator:
                 self.send_buf.remove(message)
             time.sleep(1)
 
-    def send_ping(self, recipient_address):
+    def send_ping(self, recipient_address: tuple):
         # Build an "I'm online" message and send it
         id = uuid4()
         timestamp = datetime.now()
@@ -90,7 +94,7 @@ class Communicator:
         self.sock.sendto(json_data.encode(), recipient_address)
 
     def send_message(self, message: str, recipient_address: tuple):
-        # Build a message, add it to self.outgoing_buffer database 
+        # Build a message, add it to self.outgoing_buffer database
         id = uuid4()
         timestamp = datetime.now()
         data = {"type": 0, "id": id.int, "timestamp": timestamp.isoformat('m'), "msg": message}
@@ -104,20 +108,12 @@ class Communicator:
         json_data = json.dumps(data)
         self.send_buf.append((json_data, recipient_address))
 
+    def exit(self):
+        self.exit_flag = True
+
     def __del__(self):
         if self.debug:
             print("Cleaning up Communicator.")
-        self.sender_thread.join()
-        self.listener_thread.join()
+        # self.sender_thread.join()
+        # self.listener_thread.join()
         self.sock.close()
-
-
-HOST = 'localhost'
-PORT = 6000
-
-comm = Communicator(HOST, PORT, debug=True)
-while True:
-    comm.send(str(input("Enter a message to send: ")), (HOST, PORT))
-    time.sleep(2)
-    comm.send_ping((HOST, PORT))
-    comm.send_recieved("12039123114", (HOST, PORT))
