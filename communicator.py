@@ -4,6 +4,7 @@ import time
 from uuid import uuid4
 from datetime import datetime
 import json
+import sqlite3
 
 
 class Communicator:
@@ -36,6 +37,7 @@ class Communicator:
 
     def init_udp(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.settimeout(1)
         try:
             self.sock.bind((self.host, self.port))
         except socket.error:
@@ -49,24 +51,28 @@ class Communicator:
                 if self.debug:
                     print("listener exited.")
                 return
-            data, addr = self.sock.recvfrom(1024)
+            try:
+                data, addr = self.sock.recvfrom(1024)
 
-            # Decode json data into a python dictionary
-            data = json.loads(data.decode())
-            if self.debug:
-                print(f'Recieved msg with type {data["type"]} and message {data["msg"]} from {addr}')
-            # Do things based on message type
-            if data["type"] == -1:      # recieved a ping that that address is online
-                self.online_conns.append(addr)
-            elif data["type"] == 0:     # recieved a message
-                # call something to store the message
-                print(f'New message: {data["msg"]}')
-            elif data["type"] == 1:     # recieved delivery confirmation
-                # call something to remove that message from the sending buffer
-                # TODO
-                print("Message confirmations not implemented yet")
-            else:
-                raise ValueError("Unexpected message format")
+                # Decode json data into a python dictionary
+                data = json.loads(data.decode())
+                if self.debug:
+                    print(f'Recieved msg with type {data["type"]} and message {data["msg"]} from {addr}')
+                # Do things based on message type
+                if data["type"] == -1:      # recieved a ping that that address is online
+                    self.online_conns.append(addr)
+                elif data["type"] == 0:     # recieved a message
+                    # call something to store the message
+                    print(f'New message: {data["msg"]}')
+                elif data["type"] == 1:     # recieved delivery confirmation
+                    # call something to remove that message from the sending buffer
+                    # TODO
+                    print("Message confirmations not implemented yet")
+                else:
+                    raise ValueError("Unexpected message format")
+            except TimeoutError:
+                if self.debug:
+                    print("No data found")
             time.sleep(1)
 
     def sender(self):
@@ -91,7 +97,7 @@ class Communicator:
         timestamp = datetime.now()
         data = {"type": -1, "id": id.int, "timestamp": timestamp.isoformat('m'), "msg": None}
         json_data = json.dumps(data)
-        self.sock.sendto(json_data.encode(), recipient_address)
+        self.send_buf.append((json_data, recipient_address))
 
     def send_message(self, message: str, recipient_address: tuple):
         # Build a message, add it to self.outgoing_buffer database
@@ -108,12 +114,27 @@ class Communicator:
         json_data = json.dumps(data)
         self.send_buf.append((json_data, recipient_address))
 
+    def discover(self):
+        conn = sqlite3.connect(
+            database="mydatabase.db",
+        )
+        cur = conn.cursor()
+        query = 'SELECT username, ip_address, port FROM User'
+        cur.execute(query)
+
+        known_connections = cur.fetchall()
+        for connection in known_connections:
+            print(f'{connection[1]}, {connection[2]}')
+            recipient = connection[1], connection[2]
+            self.send_ping(recipient)
+
     def exit(self):
         self.exit_flag = True
+        self.__del__()
 
     def __del__(self):
         if self.debug:
             print("Cleaning up Communicator.")
-        # self.sender_thread.join()
-        # self.listener_thread.join()
+        self.sender_thread.join()
+        self.listener_thread.join()
         self.sock.close()
