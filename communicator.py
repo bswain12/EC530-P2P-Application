@@ -62,7 +62,7 @@ class Communicator:
                 if data["type"] == -1:      # recieved a ping that that address is online
                     self.online_conns.append(addr)
                     print(f"User {self.get_username(addr)} is now online.")
-                    self.send_recieved(uuid4().int , addr)
+                    self.send_recieved(uuid4().int, addr)
                 elif data["type"] == 0:     # recieved a message
                     # call something to store the message
                     print(f'New message: {data["msg"]}')
