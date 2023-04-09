@@ -121,7 +121,7 @@ class Communicator:
 
     def discover(self):
         conn = sqlite3.connect(
-            database="mydatabase.db",
+            database="test.db",
         )
         cur = conn.cursor()
         query = 'SELECT username, ip_address, port FROM User'
@@ -135,7 +135,7 @@ class Communicator:
 
     def get_username(self, address: tuple):
         conn = sqlite3.connect(
-            database="mydatabase.db",
+            database="test.db",
         )
         cur = conn.cursor()
         query = 'SELECT username FROM User WHERE ip_address = ? AND port = ?'
