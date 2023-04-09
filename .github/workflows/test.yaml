@@ -12,6 +12,8 @@ jobs:
         run: pip install -U pytest
       - name: Cloning repo
         uses: actions/checkout@main
+      - name: Make database
+        run: python database.py
       - name: Testing
         run: echo "Testing code..."
       - run: python -m pytest test*
