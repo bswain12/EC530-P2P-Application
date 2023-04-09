@@ -76,7 +76,7 @@ class Communicator:
                 else:
                     raise ValueError("Unexpected message format")
             except BlockingIOError:
-                time.sleep(1)
+                time.sleep(0.1)
             time.sleep(1)
 
     def sender(self):
