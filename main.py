@@ -7,7 +7,11 @@ PORT = 6000
 
 
 def main():
-    comm = Communicator(HOST, PORT, True)
-    while True:
-        comm.send(str(input("Enter a message to send: ")), (HOST, PORT))
-        time.sleep(2)
+    comm = Communicator(HOST, PORT, debug=True)
+    comm.discover()
+    time.sleep(4)
+    comm.exit()
+
+
+if __name__ == "__main__":
+    main()
