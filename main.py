@@ -1,16 +1,10 @@
-from communicator import Communicator
-import time
-
-
-HOST = 'localhost'
-PORT = 6000
+from client import Client
 
 
 def main():
-    comm = Communicator(HOST, PORT, debug=True)
-    comm.discover()
-    time.sleep(4)
-    comm.exit()
+    client = Client(debug=False)
+    while client.running:
+        client.prompt()
 
 
 if __name__ == "__main__":
