@@ -66,6 +66,7 @@ class Communicator:
                     self.send_recieved(uuid4().int, addr)
                 elif data["type"] == 0:     # recieved a message
                     # call something to store the message
+                    self.store_message(data["msg"], {self.get_username(addr)})
                     if self.debug:
                         print(f'New message: {data["msg"]}')
                 elif data["type"] == 1:     # recieved delivery confirmation
@@ -114,6 +115,23 @@ class Communicator:
         data = {"type": 0, "id": id.int, "timestamp": timestamp.isoformat('m'), "msg": message}
         json_data = json.dumps(data)
         self.send_buf.append((json_data, recipient_address))
+
+    def store_message(self, message: str, username: str):
+        conn = sqlite3.connect(
+            database="test.db",
+        )
+        cur = conn.cursor()
+        query = """
+            INSERT INTO Message(
+                sender_id,
+                recipient_id,
+                message_text,
+                status
+                )
+            VALUES(?, ?, ?, ?)
+        """
+        cur.execute(query, (0, 0, message, "read"))
+        conn.close()
 
     def send_recieved(self, message_id, recipient_address: tuple):
         # Build a packet that says that this client has recieved a message, send

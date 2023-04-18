@@ -1,5 +1,11 @@
 from communicator import Communicator
 
+# Chat color variables
+TITLE_FG = '\033[96m'
+CHR_RST = '\033[0m'
+USER_FG = '\033[34m'
+OTHER_FG = '\033[32m'
+
 
 class Client:
 
@@ -8,24 +14,24 @@ class Client:
         self.running = True
         self.debug = debug
         self.comm.discover()
-        self.temp = []
+        self.messages = []
 
     def prompt(self):
         self.clear()
-        prompt_message = '''
-        What would you like to do?
-            COMMAND                     RESULT
-            "online | o"                - See online friends
-            "message / m [username]"    - Message a friend
-            "quit | q"                  - Quit the app
-        > '''
+        prompt_message = f'''\
+{TITLE_FG}What would you like to do? {CHR_RST}
+SHORTCUT    |   COMMAND             |   RESULT
+[o]         |   online              |   - See online friends
+[m] [user]  |   message [username]  |   - Message a friend
+[q]         |   quit                |   - Quit the app
+    > '''
         query = input(prompt_message)
         query = query.lower()
         self.clear()
 
         if query == 'online' or query == 'o':
             users = self.comm.get_online()
-            print("ONLINE USERS:")
+            print(f"{TITLE_FG}ONLINE USERS{CHR_RST}:")
             for user in users:
                 print(f'    - {user[0]}')
             input("Press return to continue:")
@@ -47,31 +53,31 @@ class Client:
         else:
             print("Command not found. Try again.")
             input("Press return to continue:")
-    
+
     def chat(self, username, address: tuple):
         while True:
             self.clear()
             self.load_chat(username)
-            chat_prompt = f'''
-            ==== Chatting with {username} ====
-            Send a message or 'q' to exit the chat
-            > '''
+            chat_prompt = f'''\
+==== Chatting with {OTHER_FG}{username.upper()}{CHR_RST} ====
+Send a message or 'q' to exit the chat
+    > '''
             message = input(chat_prompt)
             if message == 'q':
                 self.clear()
                 return
-            self.comm.send_message(message, address) 
-            self.temp.append(message)
+            self.comm.send_message(message, address)
+            self.messages.append(message)
 
     def load_chat(self, username):
         # TODO
-        for message in self.temp:
+        for message in self.messages:
             print(message)
-        pass           
+        pass
 
     def clear(self):
         if not self.debug:
-            print("\n" * 100)
+            print("\033c",  end="")
 
     def __del__(self):
         self.running = False
