@@ -61,18 +61,23 @@ class Communicator:
                 # Do things based on message type
                 if data["type"] == -1:      # recieved a ping that that address is online
                     self.online_conns.append(addr)
-                    print(f"User {self.get_username(addr)} is now online.")
+                    if self.debug:
+                        print(f"User {self.get_username(addr)} is now online.")
                     self.send_recieved(uuid4().int, addr)
                 elif data["type"] == 0:     # recieved a message
                     # call something to store the message
-                    print(f'New message: {data["msg"]}')
+                    self.store_message(data["msg"], {self.get_username(addr)})
+                    if self.debug:
+                        print(f'New message: {data["msg"]}')
                 elif data["type"] == 1:     # recieved delivery confirmation
                     # call something to remove that message from the sending buffer
                     # TODO
-                    print("Message confirmations not implemented yet")
+                    if self.debug:
+                        print("Message confirmations not implemented yet")
                     if addr not in self.online_conns:
                         self.online_conns.append(addr)
-                        print(f"User {self.get_username(addr)} now online.")
+                        if self.debug:
+                            print(f"User {self.get_username(addr)} now online.")
                 else:
                     raise ValueError("Unexpected message format")
             except BlockingIOError:
@@ -111,6 +116,23 @@ class Communicator:
         json_data = json.dumps(data)
         self.send_buf.append((json_data, recipient_address))
 
+    def store_message(self, message: str, username: str):
+        conn = sqlite3.connect(
+            database="test.db",
+        )
+        cur = conn.cursor()
+        query = """
+            INSERT INTO Message(
+                sender_id,
+                recipient_id,
+                message_text,
+                status
+                )
+            VALUES(?, ?, ?, ?)
+        """
+        cur.execute(query, (0, 0, message, "read"))
+        conn.close()
+
     def send_recieved(self, message_id, recipient_address: tuple):
         # Build a packet that says that this client has recieved a message, send
         timestamp = datetime.now()
@@ -142,6 +164,28 @@ class Communicator:
         username = cur.fetchone()[0]
         conn.close()
         return username
+
+    def get_address(self, username: str):
+        conn = sqlite3.connect(
+            database="test.db",
+        )
+        cur = conn.cursor()
+        query = 'SELECT ip_address, port FROM User WHERE username = ?'
+        cur.execute(query, (username,))
+        address = cur.fetchone()
+        conn.close()
+        return address
+
+    def get_online(self):
+        conn = sqlite3.connect(
+            database="test.db"
+        )
+        cur = conn.cursor()
+        query = 'SELECT username FROM User WHERE status = ?'
+        cur.execute(query, ("Online",))
+        users = cur.fetchall()
+        conn.close()
+        return users
 
     def exit(self):
         self.__del__()

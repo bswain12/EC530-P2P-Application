@@ -1,16 +1,22 @@
-from communicator import Communicator
-import time
-
-
-HOST = 'localhost'
-PORT = 6000
+from client import Client
+from sys import argv
 
 
 def main():
-    comm = Communicator(HOST, PORT, debug=True)
-    comm.discover()
-    time.sleep(4)
-    comm.exit()
+    if len(argv) > 1:
+        client = Client(
+            ip=argv[1],
+            port=int(argv[2]),
+            debug=False
+        )
+    else:
+        client = Client(debug=False)
+    while client.running:
+        try:
+            client.prompt()
+        except KeyboardInterrupt:
+            client.clear()
+            client.running = False
 
 
 if __name__ == "__main__":
