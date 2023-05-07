@@ -4,7 +4,6 @@ import time
 from uuid import uuid4
 from datetime import datetime
 import json
-import sqlite3
 
 
 class Communicator:
@@ -59,17 +58,17 @@ class Communicator:
                 if self.debug:
                     print(f'Recieved msg with type {data["type"]} and message {data["msg"]} from {addr}')
                 # Do things based on message type
-                if data["type"] == -1:      # recieved a ping that that address is online
+                if data["type"] == -1:  # received a ping that that address is online
                     self.online_conns.append(addr)
                     if self.debug:
                         print(f"User {self.get_username(addr)} is now online.")
                     self.send_recieved(uuid4().int, addr)
-                elif data["type"] == 0:     # recieved a message
+                elif data["type"] == 0:  # received a message
                     # call something to store the message
                     self.store_message(data["msg"], {self.get_username(addr)})
                     if self.debug:
                         print(f'New message: {data["msg"]}')
-                elif data["type"] == 1:     # recieved delivery confirmation
+                elif data["type"] == 1:  # received delivery confirmation
                     # call something to remove that message from the sending buffer
                     # TODO
                     if self.debug:
@@ -107,93 +106,3 @@ class Communicator:
         data = {"type": -1, "id": id.int, "timestamp": timestamp.isoformat('m'), "msg": None}
         json_data = json.dumps(data)
         self.send_buf.append((json_data, recipient_address))
-
-    def send_message(self, message: str, recipient_address: tuple):
-        # Build a message, add it to self.outgoing_buffer database
-        id = uuid4()
-        timestamp = datetime.now()
-        data = {"type": 0, "id": id.int, "timestamp": timestamp.isoformat('m'), "msg": message}
-        json_data = json.dumps(data)
-        self.send_buf.append((json_data, recipient_address))
-
-    def store_message(self, message: str, username: str):
-        conn = sqlite3.connect(
-            database="test.db",
-        )
-        cur = conn.cursor()
-        query = """
-            INSERT INTO Message(
-                sender_id,
-                recipient_id,
-                message_text,
-                status
-                )
-            VALUES(?, ?, ?, ?)
-        """
-        cur.execute(query, (0, 0, message, "read"))
-        conn.close()
-
-    def send_recieved(self, message_id, recipient_address: tuple):
-        # Build a packet that says that this client has recieved a message, send
-        timestamp = datetime.now()
-        data = {"type": 1, "id": message_id, "timestamp": timestamp.isoformat('m'), "msg": None}
-        json_data = json.dumps(data)
-        self.send_buf.append((json_data, recipient_address))
-
-    def discover(self):
-        conn = sqlite3.connect(
-            database="test.db",
-        )
-        cur = conn.cursor()
-        query = 'SELECT username, ip_address, port FROM User'
-        cur.execute(query)
-
-        known_connections = cur.fetchall()
-        for connection in known_connections:
-            recipient = connection[1], connection[2]
-            self.send_ping(recipient)
-        conn.close()
-
-    def get_username(self, address: tuple):
-        conn = sqlite3.connect(
-            database="test.db",
-        )
-        cur = conn.cursor()
-        query = 'SELECT username FROM User WHERE ip_address = ? AND port = ?'
-        cur.execute(query, address)
-        username = cur.fetchone()[0]
-        conn.close()
-        return username
-
-    def get_address(self, username: str):
-        conn = sqlite3.connect(
-            database="test.db",
-        )
-        cur = conn.cursor()
-        query = 'SELECT ip_address, port FROM User WHERE username = ?'
-        cur.execute(query, (username,))
-        address = cur.fetchone()
-        conn.close()
-        return address
-
-    def get_online(self):
-        conn = sqlite3.connect(
-            database="test.db"
-        )
-        cur = conn.cursor()
-        query = 'SELECT username FROM User WHERE status = ?'
-        cur.execute(query, ("Online",))
-        users = cur.fetchall()
-        conn.close()
-        return users
-
-    def exit(self):
-        self.__del__()
-
-    def __del__(self):
-        if self.debug:
-            print("Cleaning up Communicator.")
-        self.exit_flag = True
-        self.sender_thread.join()
-        self.listener_thread.join()
-        self.sock.close()

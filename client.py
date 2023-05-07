@@ -8,7 +8,6 @@ OTHER_FG = '\033[32m'
 
 
 class Client:
-
     def __init__(self, ip='localhost', port=6000, debug=False):
         self.comm = Communicator(ip, port, debug)
         self.running = True
@@ -24,11 +23,13 @@ SHORTCUT    |   COMMAND             |   RESULT
 [o]         |   online              |   - See online friends
 [m] [user]  |   message [username]  |   - Message a friend
 [q]         |   quit                |   - Quit the app
+[h]         |   help                |   - Print help results
     > '''
         query = input(prompt_message)
         query = query.lower()
         self.clear()
-
+        if not query:
+            return  # do nothing if query is empty
         if query == 'online' or query == 'o':
             users = self.comm.get_online()
             print(f"{TITLE_FG}ONLINE USERS{CHR_RST}:")
@@ -38,7 +39,7 @@ SHORTCUT    |   COMMAND             |   RESULT
         elif 'message' in query or query.split()[0] == 'm':
             words = query.split()
             if len(words) < 2:
-                print("No user inputed")
+                print("No user inputted")
                 input("Press return to continue:")
                 return
             username = query.split()[1]
@@ -50,6 +51,12 @@ SHORTCUT    |   COMMAND             |   RESULT
             self.chat(username, address)
         elif 'quit' in query or query == 'q':
             self.__del__()
+        elif 'help' in query or query == 'h':
+            print("The command 'o' will return all of the users who are currently online.\n"
+                  "The command 'm [username]' will send a message to the specified user.\n"
+                  "The command 'q' will quit the application.\n"
+                  "The command 'h' or 'help' will display this help message.")
+            input("Press return to continue:")
         else:
             print("Command not found. Try again.")
             input("Press return to continue:")
@@ -77,7 +84,7 @@ Send a message or 'q' to exit the chat
 
     def clear(self):
         if not self.debug:
-            print("\033c",  end="")
+            print("\033c", end="")
 
     def __del__(self):
         self.running = False
