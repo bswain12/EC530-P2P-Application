@@ -4,7 +4,6 @@ import time
 from uuid import uuid4
 from datetime import datetime
 import json
-import sqlite3
 
 
 class Communicator:
@@ -107,5 +106,3 @@ class Communicator:
         data = {"type": -1, "id": id.int, "timestamp": timestamp.isoformat('m'), "msg": None}
         json_data = json.dumps(data)
         self.send_buf.append((json_data, recipient_address))
-
-   
